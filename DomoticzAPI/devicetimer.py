@@ -23,15 +23,15 @@ class DeviceTimer:
 
     _type_add_device_timer = "addtimer"
  
-    def __init__(self, server, *args, **kwargs):
+    def __init__(self, server, device, *args, **kwargs):
         """ DeviceTimer class
 
             Args:
-                server (Server): Domoticz server object where to maintain the device            
-                    idx (:obj:`int`, optional): ID of an existing device
+                server (Server): Domoticz server object where to maintain the timer
+                device (Device): Domoticz device object where to maintain the timer
+                    idx (:obj:`int`, optional): ID of an existing timer
                 or
-                    device (:obj:`obj`, optional): Device to add device timer
-                        type (:obj:`int`, optional): Device type
+                    type (:obj:`int`, optional): Device type
         """
         self._idx = None
         self._device = None
@@ -40,20 +40,23 @@ class DeviceTimer:
             self._server = server
         else:
             self._server = None
-        # Existing device: def __init__(self, server, idx)
+        if isinstance(device, Device) and device.exists():
+            self._device = device
+        else:
+            self._device = None
+        # Existing timer: def __init__(self, server, device, idx)
         if len(args) == 1:
-            # For existing device
-            #   dev = dom.Device(server, 180)
+            # For existing timer
+            #   tmr = dom.DeviceTimer(server, device, 5)
             self._idx = int(args[0])
-        # New device:      def __init__(self, server, device, type=None):
+        # New timer:      def __init__(self, server, device, type=TME_TYPE_ON_TIME):
         elif len(args) == 2:
             self._idx = None
-            if isinstance(args[0], Device):
-                if args[0].exists():
-                    self._device = args[0]
+            self._timertype = args[0]
+            if int(args[0]) in self.TME_TYPES:
+                self._timertype = int(args[0])
             else:
-                self._device = None
-            self._timertype = args[1]
+                self._timertype = None
         else:
             self._idx = kwargs.get("idx")
             if self._idx is None:
