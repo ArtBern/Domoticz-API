@@ -46,7 +46,7 @@ def main():
 
 
     # Cleanup test data
-    hw3.delete()
+    #hw3.delete()
 
 
 if __name__ == "__main__":

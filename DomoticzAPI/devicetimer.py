@@ -22,7 +22,7 @@ class DeviceTimer:
         TME_TYPE_FIXED_DATETIME 
     ]
 
-    _type_add_device_timer = "addtimer"
+    _type_add_device_timer = "addsetpointtimer"
  
     def __init__(self, server, device, *args, **kwargs):
         """ DeviceTimer class
@@ -89,15 +89,17 @@ class DeviceTimer:
     # ..........................................................................
     def _init(self, aftercreate=False):
     
-        # Get all schedules(timers) for Devices: /json.htm?type=timers&idx=1
+        # Get all schedules(timers) for Device: /json.htm?type=timers&idx=1
         querystring = "type=setpointtimers&idx={}".format(self._device._idx)
+        print(querystring)
         self._api.querystring = querystring
         self._api.call()
         if self._api.is_OK() and self._api.has_payload():
             for var in self._api.payload:
+                print(1)
                 t = datetime.strptime(var.get("Time"),"%H:%M")
                 if aftercreate:
-					
+                    print("{} {}:{} {}".format(int(var.get("Type")), t.hour, t.minute, int(var.get("Days"))))
                     if self._timertype == int(var.get("Type")) \
                             and self._hour == t.hour \
                             and self._min == t.minute \
@@ -157,7 +159,7 @@ class DeviceTimer:
         if self._idx is None \
                 and self._device is not None:
             # /json.htm?type=command&param=addtimer&idx=DeviceRowID&active=true&timertype=2&hour=0&min=20&randomness=false&command=0&days=1234567
-            self._api.querystring = "type=command&param=addtimer&timertype={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}".format(
                 self._type_add_device_timer,
                 self._device._idx,
                 self._timertype,
@@ -165,6 +167,7 @@ class DeviceTimer:
                 self._min,
                 self._days)
             self._api.call()
+            print (self._api.querystring)
             if self._api.status == self._api.OK:
                 self._init(True)
 
