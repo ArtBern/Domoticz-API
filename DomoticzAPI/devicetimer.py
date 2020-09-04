@@ -4,7 +4,18 @@ from .api import API
 from .server import Server
 from .device import Device
 from datetime import datetime
+from enum import IntEnum
 
+class TimerDays (IntEnum):
+    NoDays = 0
+    Monday = 1
+    Thuesday = 2
+    Wednesday = 4
+    Thursday = 8
+    Friday = 16
+    Saturday = 32
+    Sunday = 64
+    
 class DeviceTimer:
 
     TME_TYPE_BEFORE_SUNRISE = 0
@@ -39,7 +50,8 @@ class DeviceTimer:
         self._timertype = None
         self._hour = None
         self._min = None
-        self._days = None
+        self._days = TimerDays.NoDays
+        self._tvalue = None
         if isinstance(server, Server) and server.exists():
             self._server = server
         else:
@@ -53,7 +65,7 @@ class DeviceTimer:
             # For existing timer
             #   tmr = dom.DeviceTimer(server, device, 5)
             self._idx = int(args[0])
-        # New timer:      def __init__(self, server, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128):
+        # New timer:      def __init__(self, server, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25):
         elif len(args) == 4:
             self._idx = None
             if int(args[0]) in self.TME_TYPES:
@@ -63,7 +75,8 @@ class DeviceTimer:
             
             self._hour = int(args[1])
             self._min = int(args[2])
-            self._days = int(args[3])
+            self._days = TimerDays(args[3])
+            self._tvalue = float(arg[4])
             
         else:
             self._idx = kwargs.get("idx")
@@ -75,14 +88,15 @@ class DeviceTimer:
         self._init()
 
     def __str__(self):
-        return "{}({}, {}, ID:{}, TimerType:{}, Hour:{}, Min:{},Days:{} )".format(self.__class__.__name__,
+        return "{}({}, {}, ID:{}, TimerType:{}, Hour:{}, Min:{},Days:{}, Value:{} )".format(self.__class__.__name__,
                                            str(self._server),
                                            str(self._device),
                                            self._idx,
                                            self._timertype,
                                            self._hour,
                                            self._min,
-                                           self._days)
+                                           self._days,
+                                           self._tvalue)
 
     # ..........................................................................
     # Private methods
@@ -96,15 +110,15 @@ class DeviceTimer:
         self._api.call()
         if self._api.is_OK() and self._api.has_payload():
             for var in self._api.payload:
-                print(1)
                 t = datetime.strptime(var.get("Time"),"%H:%M")
                 if aftercreate:
                     print("{} {}:{} {}".format(int(var.get("Type")), t.hour, t.minute, int(var.get("Days"))))
                     if self._timertype == int(var.get("Type")) \
                             and self._hour == t.hour \
                             and self._min == t.minute \
-                            and self._days == int(var.get("Days")):
-                        if self._idx < int(var.get("idx")):
+                            and self._days == TimerDays(int(var.get("Days"))) \
+                            and self._tvalue == float(var.get("Temperature")):
+                        if self._idx is None or self._idx < int(var.get("idx")):
                             self._idx = int(var.get("idx"))
                             print(self._idx)
                     
@@ -114,7 +128,8 @@ class DeviceTimer:
                             self._timertype = int(var.get("Type"))
                             self._hour = t.hour
                             self._min = t.minute
-                            self._days = int(var.get("Days"))
+                            self._days = TimerDays(int(var.get("Days")))
+                            self._tvalue = float(var.get("Temperature"))
                             break
 
     def _update(self, key, value):
@@ -159,13 +174,13 @@ class DeviceTimer:
         if self._idx is None \
                 and self._device is not None:
             # /json.htm?type=command&param=addtimer&idx=DeviceRowID&active=true&timertype=2&hour=0&min=20&randomness=false&command=0&days=1234567
-            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue=4".format(
                 self._type_add_device_timer,
                 self._device._idx,
                 self._timertype,
                 self._hour,
                 self._min,
-                self._days)
+                self._days.value)
             self._api.call()
             print (self._api.querystring)
             if self._api.status == self._api.OK:
