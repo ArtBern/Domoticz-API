@@ -4,9 +4,9 @@ from .api import API
 from .server import Server
 from .device import Device
 from datetime import datetime
-from enum import IntEnum
+from enum import IntFlag
 
-class TimerDays (IntEnum):
+class TimerDays (IntFlag):
     NoDays = 0
     Monday = 1
     Thuesday = 2
@@ -34,6 +34,7 @@ class DeviceTimer:
     ]
 
     _type_add_device_timer = "addsetpointtimer"
+    _type_delete_device_timer = "deletesetpointtimer"
  
     def __init__(self, server, device, *args, **kwargs):
         """ DeviceTimer class
@@ -52,6 +53,7 @@ class DeviceTimer:
         self._min = None
         self._days = TimerDays.NoDays
         self._tvalue = None
+        
         if isinstance(server, Server) and server.exists():
             self._server = server
         else:
@@ -66,7 +68,7 @@ class DeviceTimer:
             #   tmr = dom.DeviceTimer(server, device, 5)
             self._idx = int(args[0])
         # New timer:      def __init__(self, server, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25):
-        elif len(args) == 4:
+        elif len(args) == 5:
             self._idx = None
             if int(args[0]) in self.TME_TYPES:
                 self._timertype = int(args[0])
@@ -76,7 +78,7 @@ class DeviceTimer:
             self._hour = int(args[1])
             self._min = int(args[2])
             self._days = TimerDays(args[3])
-            self._tvalue = float(arg[4])
+            self._tvalue = float(args[4])
             
         else:
             self._idx = kwargs.get("idx")
@@ -95,7 +97,7 @@ class DeviceTimer:
                                            self._timertype,
                                            self._hour,
                                            self._min,
-                                           self._days,
+                                           self._days.name,
                                            self._tvalue)
 
     # ..........................................................................
@@ -174,15 +176,15 @@ class DeviceTimer:
         if self._idx is None \
                 and self._device is not None:
             # /json.htm?type=command&param=addtimer&idx=DeviceRowID&active=true&timertype=2&hour=0&min=20&randomness=false&command=0&days=1234567
-            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue=4".format(
+            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}".format(
                 self._type_add_device_timer,
                 self._device._idx,
                 self._timertype,
                 self._hour,
                 self._min,
-                self._days.value)
+                self._days.value,
+                self._tvalue)
             self._api.call()
-            print (self._api.querystring)
             if self._api.status == self._api.OK:
                 self._init(True)
 
@@ -190,7 +192,7 @@ class DeviceTimer:
         if self.exists():
             # /json.htm?type=deletedevice&idx=IDX
             self._api.querystring = "type={}&idx={}".format(
-                self._type_delete_device,
+                self._type_delete_device_timer,
                 self._idx)
             self._api.call()
             if self._api.status == self._api.OK:
@@ -198,7 +200,7 @@ class DeviceTimer:
                 self._idx = None
 
     def exists(self):
-        """ Check if device exists in Domoticz """
+        """ Check if device timer exists in Domoticz """
         return not (self._idx is None or self._device is None)
 
 

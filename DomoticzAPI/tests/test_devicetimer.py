@@ -36,7 +36,7 @@ def main():
             print("Thermostat successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
-            tmr = dom.DeviceTimer(server, dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Friday)
+            tmr = dom.DeviceTimer(server, dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5)
 
             tmr.add()
 
