@@ -119,7 +119,8 @@ class DeviceTimer:
                             and self._hour == t.hour \
                             and self._min == t.minute \
                             and self._days == TimerDays(int(var.get("Days"))) \
-                            and self._tvalue == float(var.get("Temperature")):
+                            and self._tvalue == float(var.get("Temperature")) \
+							and self._date == var.get:
                         if self._idx is None or self._idx < int(var.get("idx")):
                             self._idx = int(var.get("idx"))
                             print(self._idx)
@@ -168,7 +169,9 @@ class DeviceTimer:
             except:
                 self._nvalue = None
                 self._svalue = None
-
+	
+	def _strToDate(str):
+		return datetime.datetime.strptime(str, '%Y-%m-%d') if str else pd.NaT
     # ..........................................................................
     # Public methods
     # ..........................................................................
@@ -176,14 +179,15 @@ class DeviceTimer:
         if self._idx is None \
                 and self._device is not None:
             # /json.htm?type=command&param=addtimer&idx=DeviceRowID&active=true&timertype=2&hour=0&min=20&randomness=false&command=0&days=1234567
-            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}&date={}".format(
                 self._type_add_device_timer,
                 self._device._idx,
                 self._timertype,
                 self._hour,
                 self._min,
                 self._days.value,
-                self._tvalue)
+                self._tvalue,
+				datetime.datetime.strptime(self._date, '%Y-%m-%d') if self._date else "")
             self._api.call()
             if self._api.status == self._api.OK:
                 self._init(True)

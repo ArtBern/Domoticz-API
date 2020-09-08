@@ -37,9 +37,10 @@ def main():
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
             tmr = dom.DeviceTimer(server, dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5)
-
+			print("Timer exists: {}".format(tmr.exists()))
+			print("Adding new timer.")
             tmr.add()
-
+			print("Timer exists: {}".format(tmr.exists()))
             if tmr.exists():
                 print ("Device timer successfully created")
                 print (tmr)
