@@ -36,14 +36,28 @@ def main():
             print("Thermostat successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
-            tmr = dom.DeviceTimer(server, dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5)
-			print("Timer exists: {}".format(tmr.exists()))
-			print("Adding new timer.")
+            tmr = dom.DeviceTimer(dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5)
+            print("Timer exists: {}".format(tmr.exists()))
+            print("Adding new timer.")
             tmr.add()
-			print("Timer exists: {}".format(tmr.exists()))
+            print("Timer exists: {}".format(tmr.exists()))
             if tmr.exists():
                 print ("Device timer successfully created")
                 print (tmr)
+            else:
+                print ("Failed to add timer!!!")
+                return
+            
+            print("\r")
+            print("--------------------------------------------------------------------------------")
+            print("Update timer")
+            print("--------------------------------------------------------------------------------")
+            tmr.timertype = dom.DeviceTimer.TME_TYPE_FIXED_DATETIME
+            tmr.hour = 2
+            tmr.minute = 30
+            
+            print (tmr)
+            
 
 
     # Cleanup test data
