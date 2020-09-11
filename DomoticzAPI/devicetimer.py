@@ -36,6 +36,7 @@ class DeviceTimer:
     _param_add_device_timer = "addsetpointtimer"
     _param_update_device_timer = "updatesetpointtimer"
     _param_delete_device_timer = "deletesetpointtimer"
+    _param_clear_device_timers = "clearsetpointtimers"
 
  
     def __init__(self, device, *args, **kwargs):
@@ -60,13 +61,14 @@ class DeviceTimer:
             self._device = device
         else:
             self._device = None
+        print(args)    
         # Existing timer: def __init__(self, device, idx)
         if len(args) == 1:
             # For existing timer
             #   tmr = dom.DeviceTimer(device, 5)
             self._idx = int(args[0])
-        # New timer:      def __init__(self, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25):
-        elif len(args) == 5:
+        # New timer:      def __init__(self, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25, date=None):
+        elif len(args) == 6:
             self._idx = None
             if int(args[0]) in self.TME_TYPES:
                 self._timertype = int(args[0])
@@ -77,6 +79,12 @@ class DeviceTimer:
             self._min = int(args[2])
             self._days = TimerDays(args[3])
             self._tvalue = float(args[4])
+            self._date = DeviceTimer._checkDateFormat(args[5])
+            
+            if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
+                and self._date is None):
+                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+                
             
         else:
             self._idx = kwargs.get("idx")
@@ -141,7 +149,7 @@ class DeviceTimer:
     
     @staticmethod 
     def _checkDateFormat(str):
-        return datetime.strptime(str, '%Y-%m-%d').strftime('%Y-%m-%d') if str else None
+        return datetime.strptime(str, '%Y-%m-%d').strftime('%Y-%m-%d') if str and str != "" else None
     
     # ..........................................................................
     # Public methods
@@ -217,6 +225,9 @@ class DeviceTimer:
     @timertype.setter
     def timertype(self, value):
         if value in self.TME_TYPES:
+            if (value == self.TME_TYPE_FIXED_DATETIME \
+                and self._date is None):
+                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
             self._timertype = value
             self.__update()
     
@@ -241,5 +252,19 @@ class DeviceTimer:
         if value >= 0 and value <= 60:
             self._min = value
             self.__update()
+            
+    @property
+    def date(self):
+        """int: Timer date."""
+        return self._date
+
+    @date.setter
+    def date(self, value):
+        value = DeviceTimer._checkDateFormat(value)
+        if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
+            and value is None):
+            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+        self._date = value
+        self.__update()
     
     
