@@ -5,9 +5,10 @@ from .server import Server
 from .device import Device
 from datetime import datetime
 from enum import IntFlag
+from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
 
 class TimerDays (IntFlag):
-    NoDays = 0
+    EveryDay = 0
     Monday = 1
     Thuesday = 2
     Wednesday = 4
@@ -41,19 +42,40 @@ class DeviceTimer:
  
     def __init__(self, device, *args, **kwargs):
         """ DeviceTimer class
-
             Args:
                 device (Device): Domoticz device object where to maintain the timer
-                    idx (:obj:`int`, optional): ID of an existing timer
+                    idx (:obj:`int`): ID of an existing timer
                 or
-                    type (:obj:`int`, optional): Device type
+                    active (:obj:`bool`):  true/false
+                    timertype (:obj:`int`): Type of the timer
+                        TME_TYPE_BEFORE_SUNRISE = 0
+                        TME_TYPE_AFTER_SUNRISE = 1
+                        TME_TYPE_ON_TIME = 2
+                        TME_TYPE_BEFORE_SUNSET = 3
+                        TME_TYPE_AFTER_SUNSET = 4
+                        TME_TYPE_FIXED_DATETIME = 5
+                    hour (:obj:`int`): Hour
+                    min (:obj:`int`): Minute
+                    date (:obj:`str`):  Date for TME_TYPE_FIXED_DATETIME type. Format is "YYYY-MM-DD" ("2020-12-25")
+                    days (:obj:`int`): Days combination for timer
+                        EveryDay = 0
+                        Monday = 1
+                        Thuesday = 2
+                        Wednesday = 4
+                        Thursday = 8
+                        Friday = 16
+                        Saturday = 32
+                        Sunday = 64
+                    temerature (:obj:`float`): Value for timer
+                    
         """
         self._idx = None
         self._device = None
+        self._active = True
         self._timertype = None
         self._hour = None
         self._min = None
-        self._days = TimerDays.NoDays
+        self._days = TimerDays.EveryDay
         self._tvalue = None
         self._date = None
         
@@ -61,25 +83,25 @@ class DeviceTimer:
             self._device = device
         else:
             self._device = None
-        print(args)    
+        #print(args)    
         # Existing timer: def __init__(self, device, idx)
         if len(args) == 1:
             # For existing timer
             #   tmr = dom.DeviceTimer(device, 5)
             self._idx = int(args[0])
-        # New timer:      def __init__(self, device, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25, date=None):
-        elif len(args) == 6:
+        # New timer:      def __init__(self, device, active, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25, date=None):
+        elif len(args) == 7:
             self._idx = None
-            if int(args[0]) in self.TME_TYPES:
-                self._timertype = int(args[0])
+            if int(args[1]) in self.TME_TYPES:
+                self._timertype = int(args[1])
             else:
                 self._timertype = None
-            
-            self._hour = int(args[1])
-            self._min = int(args[2])
-            self._days = TimerDays(args[3])
-            self._tvalue = float(args[4])
-            self._date = DeviceTimer._checkDateFormat(args[5])
+            self._active = bool(args[0])
+            self._hour = int(args[2])
+            self._min = int(args[3])
+            self._days = TimerDays(args[4])
+            self._tvalue = float(args[5])
+            self._date = DeviceTimer._checkDateFormat(args[6])
             
             if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
                 and self._date is None):
@@ -87,18 +109,19 @@ class DeviceTimer:
                 
             
         else:
-            self._idx = kwargs.get("idx")
+            idx = kwargs.get("idx")
+            self._idx = int(idx) if idx is not None else None
             if self._idx is None:
-                self._hardware = kwargs.get("device")
-                self._timertype = kwargs.get("type")
+                self._timertype = kwargs.get("timertype")
 
         self._api = self._device.hardware.api
         self._init()
 
     def __str__(self):
-        return "{}({}, ID:{}, TimerType:{}, Hour:{}, Min:{},Days:{}, Value:{}, Date: {} )".format(self.__class__.__name__,
+        return "{}({}, ID:{}, Active: {}, TimerType:{}, Hour:{}, Min:{},Days:{}, Value:{}, Date: {} )".format(self.__class__.__name__,
                                            str(self._device),
                                            self._idx,
+                                           self._active,
                                            self._timertype,
                                            self._hour,
                                            self._min,
@@ -119,8 +142,9 @@ class DeviceTimer:
             for var in self._api.payload:
                 t = datetime.strptime(var.get("Time"),"%H:%M")
                 if aftercreate:
-                    #print("{} {}:{} {} Date:{}".format(int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
+                    #print("{} {} {}:{} {} Date:{}".format(str_2_bool(var.get("Active")), int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
                     if self._timertype == int(var.get("Type")) \
+                            and self._active == str_2_bool(var.get("Active")) \
                             and self._hour == t.hour \
                             and self._min == t.minute \
                             and self._days == TimerDays(int(var.get("Days"))) \
@@ -128,6 +152,7 @@ class DeviceTimer:
                             and self._date == DeviceTimer._checkDateFormat(var.get("Date")):
                         if self._idx is None or self._idx < int(var.get("idx")):
                             self._idx = int(var.get("idx"))
+                            self._active = str_2_bool(var.get("Active"))
                             self._timertype = int(var.get("Type"))
                             self._hour = t.hour
                             self._min = t.minute
@@ -138,6 +163,7 @@ class DeviceTimer:
                 else:
                     #print("{} {} {}:{} {} Date:{}".format(var.get("idx"), int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
                     if (self._idx is not None and int(var.get("idx")) == self._idx):
+                        self._active = str_2_bool(var.get("Active"))
                         self._timertype = int(var.get("Type"))
                         self._hour = t.hour
                         self._min = t.minute
@@ -157,22 +183,24 @@ class DeviceTimer:
     def add(self):
         if self._idx is None \
                 and self._device is not None:
-            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}&date={}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}&date={}".format(
                 self._param_add_device_timer,
                 self._device._idx,
+                bool_2_str(self._active),
                 self._timertype,
                 self._hour,
                 self._min,
                 self._days.value,
                 self._tvalue,
                 self._date)
+            #print(self._api.querystring)
             self._api.call()
             if self._api.status == self._api.OK:
                 self._init(True)
 
     def delete(self):
         if self.exists():
-            self._api.querystring = "type=command&param={}type={}&idx={}".format(
+            self._api.querystring = "type=command&param={}&idx={}".format(
                 self._param_delete_device_timer,
                 self._idx)
             self._api.call()
@@ -187,17 +215,27 @@ class DeviceTimer:
     def __update(self):
         
         if self.exists():
-            self._api.querystring = "type=command&param={}&idx={}&active=true&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}&date={}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&tvalue={}&date={}".format(
                 self._param_update_device_timer,
                 self._idx,
+                bool_2_str(self._active),
                 self._timertype,
                 self._hour,
                 self._min,
                 self._days.value,
                 self._tvalue,
                 self._date)
+            #print(self._api.querystring)
             self._api.call()
             self._init()
+            
+    def setdatetimer(self, date):
+        valueChecked = DeviceTimer._checkDateFormat(date)
+        if (valueChecked is None):
+            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+        self._date = valueChecked
+        self._timertype = self.TME_TYPE_FIXED_DATETIME
+        self.__update()
 
     # ..........................................................................
     # Properties
@@ -218,6 +256,16 @@ class DeviceTimer:
         return self._device
 
     @property
+    def active(self):
+        """bool: Is Timer active."""
+        return self._active
+
+    @active.setter
+    def active(self, value):
+        self._active = value
+        self.__update()
+            
+    @property
     def timertype(self):
         """int: Timer type, eg. TME_TYPE_ON_TIME."""
         return self._timertype
@@ -227,7 +275,7 @@ class DeviceTimer:
         if value in self.TME_TYPES:
             if (value == self.TME_TYPE_FIXED_DATETIME \
                 and self._date is None):
-                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME. Use setdatetimer(date) method.")
             self._timertype = value
             self.__update()
     
@@ -260,11 +308,22 @@ class DeviceTimer:
 
     @date.setter
     def date(self, value):
-        value = DeviceTimer._checkDateFormat(value)
+        valueChecked = DeviceTimer._checkDateFormat(value)
         if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
-            and value is None):
+            and valueChecked is None):
             raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
-        self._date = value
+        elif (self._timertype != self.TME_TYPE_FIXED_DATETIME):
+            raise ValueError("Not able to update date for non-TME_TYPE_FIXED_DATETIME timer type. Use setdatetimer(date) method.")
+        self._date = valueChecked
         self.__update()
     
+    @property
+    def temperature(self):
+        """float: Timer temerature."""
+        return self._min
+
+    @temperature.setter
+    def temperature(self, value):
+        self._tvalue = float(value)
+        self.__update()
     

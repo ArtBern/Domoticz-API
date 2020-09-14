@@ -36,7 +36,8 @@ def main():
             print("Thermostat successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
-            tmr = dom.DeviceTimer(dev3, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5, None)
+            tmr = dom.DeviceTimer(dev3, True, dom.DeviceTimer.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, 5, None)
+            print (tmr)
             print("Timer exists: {}".format(tmr.exists()))
             print("Adding new timer.")
             tmr.add()
@@ -52,13 +53,44 @@ def main():
             print("--------------------------------------------------------------------------------")
             print("Update timer")
             print("--------------------------------------------------------------------------------")
-            tmr.date = "2020-12-01"
-            tmr.timertype = dom.DeviceTimer.TME_TYPE_FIXED_DATETIME
-            tmr.hour = 2
-            tmr.minute = 30
+            try:
+                tmr.date = "2020-12-01"
+                raise RuntimeError("Expected ValueError not raised!!!")
+            except ValueError:
+                pass
             
+            try:
+                tmr.timertype = dom.DeviceTimer.TME_TYPE_FIXED_DATETIME
+                raise RuntimeError("Expected ValueError not raised!!!")
+            except ValueError:
+                pass
+                
+            print("\r")
+            print("--------------------------------------------------------------------------------")
+            print("Negative checks passed.")
+            print("Change type to Fixed Date/Time.")            
+            print("--------------------------------------------------------------------------------")            
+            tmr.setdatetimer("2020-12-02")
+            print(tmr)
+            print("--------------------------------------------------------------------------------")
+            print("Change time.")
+            print("--------------------------------------------------------------------------------")           
+            tmr.hour = 3
+            tmr.minute = 30
+            tmr.date = "2020-12-03"
+            print (tmr)
+            print("--------------------------------------------------------------------------------")
+            print("Deactivate timer and set value.")
+            print("--------------------------------------------------------------------------------")           
+            tmr.active = False
+            tmr.temperature = 20.8
             print (tmr)
             
+            tmr.delete()
+            if tmr.exists():
+                print("Failed to delete timer!!!")
+            else:
+                print("Timer deleted OK.")
 
 
     # Cleanup test data
