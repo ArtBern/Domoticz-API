@@ -11,12 +11,12 @@ from .basetimer import BaseTimer, TimerDays
 
 class DeviceTimer(BaseTimer):
 
-    _param_add_device_timer = "addtimer"
-    _param_update_device_timer = "updatetimer"
-    _param_delete_device_timer = "deletetimer"
-    _param_clear_device_timers = "clearstimers"
+    _param_add_device_timer = "addsetpointtimer"
+    _param_update_device_timer = "updatesetpointtimer"
+    _param_delete_device_timer = "deletesetpointtimer"
+    _param_clear_device_timers = "clearsetpointtimers"
 
-    _args_length = 3
+    _args_length = 1
     
     def __init__(self, device, *args, **kwargs):
         """ DeviceTimer class
@@ -51,20 +51,11 @@ class DeviceTimer(BaseTimer):
         super().__init__(device, *args, **kwargs)
     
     def _initargs(self, args):
-        self._command = int(args[6])
-        self._level = int(args[7])
-        self._color = args[8]
-        self._randomness = bool(args[9])
-        self._occurence = int(args[10])
+        self._tvalue = float(args[6])
     
     def _comparefields(self, var):
-        return self._command == int(var.get("Command")) \
-            self._level = int(var.get("Level")) \
-            self._color = var.get("Color") \
-            self._randomness = str_2_bool(var.get("Randomness")) \
-            self._occurence = int(var.get("Occurence"))
-            
-            
+        return self._tvalue == float(var.get("Temperature"))
+        
     def _initfields(self, var):
         self._tvalue = float(var.get("Temperature"))
     
