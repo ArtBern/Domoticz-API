@@ -4,7 +4,7 @@ from .api import API
 from .server import Server
 from .device import Device
 from datetime import datetime
-from enum import IntFlag
+from enum import IntFlag, IntEnum
 from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
 from abc import ABC, abstractmethod
 
@@ -18,24 +18,44 @@ class TimerDays (IntFlag):
     Saturday = 32
     Sunday = 64
     
-class BaseTimer(ABC):
-
+class TimerTypes (IntEnum):
     TME_TYPE_BEFORE_SUNRISE = 0
     TME_TYPE_AFTER_SUNRISE = 1
     TME_TYPE_ON_TIME = 2
     TME_TYPE_BEFORE_SUNSET = 3
     TME_TYPE_AFTER_SUNSET = 4
     TME_TYPE_FIXED_DATETIME = 5
-    TME_TYPES = [
-        TME_TYPE_BEFORE_SUNRISE,
-        TME_TYPE_AFTER_SUNRISE,
-        TME_TYPE_ON_TIME,
-        TME_TYPE_BEFORE_SUNSET,
-        TME_TYPE_AFTER_SUNSET,
-        TME_TYPE_FIXED_DATETIME 
-    ]
+    TME_TYPE_DAYSODD = 6
+    TME_TYPE_DAYSEVEN = 7
+    TME_TYPE_WEEKSODD = 8
+    TME_TYPE_WEEKSEVEN = 9
+    TME_TYPE_MONTHLY = 10
+    TME_TYPE_MONTHLY_WD = 11
+    TME_TYPE_YEARLY = 12
+    TME_TYPE_YEARLY_WD = 13
+    TME_TYPE_BEFORESUNATSOUTH = 14
+    TME_TYPE_AFTERSUNATSOUTH = 15
+    TME_TYPE_BEFORECIVTWSTART = 16
+    TME_TYPE_AFTERCIVTWSTART = 17
+    TME_TYPE_BEFORECIVTWEND = 18
+    TME_TYPE_AFTERCIVTWEND = 19
+    TME_TYPE_BEFORENAUTTWSTART = 20
+    TME_TYPE_AFTERNAUTTWSTART = 21
+    TME_TYPE_BEFORENAUTTWEND = 22
+    TME_TYPE_AFTERNAUTTWEND = 23
+    TME_TYPE_BEFOREASTTWSTART = 24
+    TME_TYPE_AFTERASTTWSTART = 25
+    TME_TYPE_BEFOREASTTWEND = 26
+    TME_TYPE_AFTERASTTWEND = 27
+    TME_TYPE_END = 28
+    
+    @classmethod
+    def has_value(cls, value):
+        return value in cls._value2member_map_ 
+        
+    
+class BaseTimer(ABC):
 
-  
     _args_length = 0
 
     @abstractmethod
@@ -75,8 +95,10 @@ class BaseTimer(ABC):
         self._hour = None
         self._min = None
         self._days = TimerDays.EveryDay
-        self._tvalue = None
         self._date = None
+        self._occurence = 0
+        self._mday = 0
+        self._month = 0
         
         if isinstance(device, Device) and device.exists():
             self._device = device
@@ -89,25 +111,22 @@ class BaseTimer(ABC):
             #   tmr = dom.DeviceTimer(device, 5)
             self._idx = int(args[0])
         # New timer:      def __init__(self, device, active, type=TME_TYPE_ON_TIME, hour=0, min=0, days=128, tvalue=25, date=None):
-        elif len(args) == 6 + self._args_length:
+        elif len(args) == 9 + self._args_length:
             self._idx = None
-            if int(args[1]) in self.TME_TYPES:
-                self._timertype = int(args[1])
-            else:
-                self._timertype = None
+            self._timertype = TimerTypes(args[1])
             self._active = bool(args[0])
             self._hour = int(args[2])
             self._min = int(args[3])
             self._days = TimerDays(args[4])
             self._date = BaseTimer._checkDateFormat(args[5])
-            
+            self._occurence = int(args[6])
+            self._mday = int(args[7])
+            self._month = int(args[8])
+                        
             self._initargs(args)
             
-            if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
-                and self._date is None):
-                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
-                
-            
+            BaseTimer.__checkTypeAndValues(self._timertype, self._date, self._occurence, self._mday, self._month)
+                            
         else:
             idx = kwargs.get("idx")
             self._idx = int(idx) if idx is not None else None
@@ -116,6 +135,24 @@ class BaseTimer(ABC):
 
         self._api = self._device.hardware.api
         self._init()
+        
+    @staticmethod  
+    def __checkTypeAndValues( timertype, date, occurence, mday, month):
+        if (timertype == TimerTypes.TME_TYPE_FIXED_DATETIME \
+            and date is None):
+            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+        elif (timertype == TimerTypes.TME_TYPE_MONTHLY \
+            and mday == 0):
+            raise ValueError("Month day should be specified for TME_TYPE_MONTHLY.")
+        elif (timertype == TimerTypes.TME_TYPE_MONTHLY_WD \
+            and occurence == 0):
+            raise ValueError("Occurence should be specified for TME_TYPE_MONTHLY_WD.")
+        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY \
+            and (mday == 0 or month ==0)):
+            raise ValueError("Day and Month should be specified for TME_TYPE_YEARLY.")
+        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY_WD \
+            and (occurence == 0 or month ==0)):
+            raise ValueError("Occurence and Month should be specified for TME_TYPE_YEARLY_WD")
     
     @abstractmethod
     def _initargs(self, args):
@@ -138,23 +175,25 @@ class BaseTimer(ABC):
         pass
     
     def __str__(self):
-        return "{}({}, ID:{}, Active: {}, TimerType:{}, Hour:{}, Min:{}, Days:{}, Date:{}{})".format(self.__class__.__name__,
+        return "{}({}, ID:{}, Active: {}, TimerType:{}, Hour:{}, Min:{}, Days:{}, Date:{}, Occurence:{}, MDay:{}, Month:{})".format(self.__class__.__name__,
                                            str(self._device),
                                            self._idx,
                                            self._active,
-                                           self._timertype,
+                                           repr(self._timertype),
                                            self._hour,
                                            self._min,
                                            repr(self._days),
                                            self._date,
+                                           self._occurence,
+                                           self._mday,
+                                           self._month,
                                            self._addstr())
     # ..........................................................................
     # Private methods
     # ..........................................................................
     def _init(self, aftercreate=False):
     
-        # Get all schedules(timers) for Device: /json.htm?type=timers&idx=1
-        querystring = "type=setpointtimers&idx={}".format(self._device._idx)
+        querystring = "type={}&idx={}".format(self._param_timers, self._device._idx)
         self._api.querystring = querystring
         self._api.call()
         if self._api.is_OK() and self._api.has_payload():
@@ -168,6 +207,9 @@ class BaseTimer(ABC):
                             and self._min == t.minute \
                             and self._days == TimerDays(int(var.get("Days"))) \
                             and self._date == BaseTimer._checkDateFormat(var.get("Date")) \
+                            and self._occurence == int(var.get("Occurence")) \
+                            and self._mday == int(var.get("MDay")) \
+                            and self._month == int(var.get("Month")) \
                             and self._comparefields(var):
                         if self._idx is None or self._idx < int(var.get("idx")):
                             self._idx = int(var.get("idx"))
@@ -176,7 +218,11 @@ class BaseTimer(ABC):
                             self._hour = t.hour
                             self._min = t.minute
                             self._days = TimerDays(int(var.get("Days")))
-                            self._date == BaseTimer._checkDateFormat(var.get("Date"))
+                            self._date = BaseTimer._checkDateFormat(var.get("Date"))
+                            self._occurence = int(var.get("Occurence")) 
+                            self._mday = int(var.get("MDay")) 
+                            self._month = int(var.get("Month"))
+                            
                             self._initfields(var)
                     
                 else:
@@ -188,6 +234,9 @@ class BaseTimer(ABC):
                         self._min = t.minute
                         self._days = TimerDays(int(var.get("Days")))
                         self._date = BaseTimer._checkDateFormat(var.get("Date"))
+                        self._occurence = int(var.get("Occurence")) 
+                        self._mday = int(var.get("MDay")) 
+                        self._month = int(var.get("Month"))
                         self._initfields(var)
                         break
     
@@ -202,7 +251,7 @@ class BaseTimer(ABC):
     def add(self):
         if self._idx is None \
                 and self._device is not None:
-            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&date={}{}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&date={}&occurence={}&mday={}&month={}{}".format(
                 self._param_add_device_timer,
                 self._device._idx,
                 bool_2_str(self._active),
@@ -211,8 +260,11 @@ class BaseTimer(ABC):
                 self._min,
                 self._days.value,
                 self._date,
+                self._occurence,
+                self._mday,
+                self._month,
                 self._addquerystring())
-            #print(self._api.querystring)
+            print(self._api.querystring)
             self._api.call()
             if self._api.status == self._api.OK:
                 self._init(True)
@@ -234,7 +286,7 @@ class BaseTimer(ABC):
     def _update(self):
         
         if self.exists():
-            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&date={}{}".format(
+            self._api.querystring = "type=command&param={}&idx={}&active={}&timertype={}&hour={}&min={}&randomness=false&command=0&days={}&date={}&occurence={}&mday={}&month={}{}".format(
                 self._param_update_device_timer,
                 self._idx,
                 bool_2_str(self._active),
@@ -243,17 +295,50 @@ class BaseTimer(ABC):
                 self._min,
                 self._days.value,
                 self._date,
+                self._occurence,
+                self._mday,
+                self._month,
                 self._addquerystring())
             #print(self._api.querystring)
             self._api.call()
             self._init()
             
-    def setdatetimer(self, date):
+    def setfixeddatetimer(self, date):
         valueChecked = BaseTimer._checkDateFormat(date)
-        if (valueChecked is None):
-            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_FIXED_DATETIME, valueChecked, self._occurence, self._mday, self._month)
+        
         self._date = valueChecked
         self._timertype = self.TME_TYPE_FIXED_DATETIME
+        self._update()
+        
+    def setmonthlytimer(self, mday):
+        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_MONTHLY, self._date, self._occurence, mday, self._month)
+        
+        self._mday = mday
+        self._timertype = self.TME_TYPE_MONTHLY
+        self._update()
+        
+    def setmonthlywdtimer(self, occurence):
+        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_MONTHLY_WD, self._date, occurence, self._mday, self._month)
+        
+        self._occurence = occurence
+        self._timertype = self.TME_TYPE_MONTHLY_WD
+        self._update()
+        
+    def setyearlytimer(self, mday, month):
+        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_YEARLY, self._date, self._occurence, mday, month)
+        
+        self._mday = mday
+        self._month = month
+        self._timertype = self.TME_TYPE_YEARLY
+        self._update()
+        
+    def setyearlywdtimer(self, occurence, month):
+        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_YEARLY_WD, self._date, occurence, self._mday, month)
+        
+        self._occurence = occurence
+        self._month = month
+        self._timertype = self.TME_TYPE_YEARLY_WD
         self._update()
 
     # ..........................................................................

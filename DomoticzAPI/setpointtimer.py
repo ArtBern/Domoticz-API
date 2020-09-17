@@ -9,13 +9,14 @@ from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
 from abc import ABC
 from .basetimer import BaseTimer, TimerDays
 
-class DeviceTimer(BaseTimer):
+class SetPointTimer(BaseTimer):
 
     _param_add_device_timer = "addsetpointtimer"
     _param_update_device_timer = "updatesetpointtimer"
     _param_delete_device_timer = "deletesetpointtimer"
     _param_clear_device_timers = "clearsetpointtimers"
-
+    _param_timers = "setpointtimers"
+    
     _args_length = 1
     
     def __init__(self, device, *args, **kwargs):

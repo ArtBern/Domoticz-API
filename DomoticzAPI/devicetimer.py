@@ -15,6 +15,7 @@ class DeviceTimer(BaseTimer):
     _param_update_device_timer = "updatetimer"
     _param_delete_device_timer = "deletetimer"
     _param_clear_device_timers = "clearstimers"
+    _param_timers = "timers"
 
     _args_length = 3
     
@@ -59,17 +60,19 @@ class DeviceTimer(BaseTimer):
     
     def _comparefields(self, var):
         return self._command == int(var.get("Command")) \
-            self._level = int(var.get("Level")) \
-            self._color = var.get("Color") \
-            self._randomness = str_2_bool(var.get("Randomness")) \
-            self._occurence = int(var.get("Occurence"))
+            and self._level == int(var.get("Level")) \
+            and self._color == var.get("Color") \
+            and self._randomness == str_2_bool(var.get("Randomness"))
             
             
     def _initfields(self, var):
-        self._tvalue = float(var.get("Temperature"))
-    
+        self._command = int(var.get("Command")) 
+        self._level = int(var.get("Level")) 
+        self._color = var.get("Color") 
+        self._randomness = str_2_bool(var.get("Randomness")) 
+           
     def _addquerystring(self):
-        return "&tvalue={}".format(self._tvalue)
+        return "&command={}&level={}&color={}&randomness={}&".format(self._tvalue)
         
     def _addstr(self):
         return ", Temperature: {}".format(self._tvalue)

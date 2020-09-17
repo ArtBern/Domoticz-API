@@ -16,4 +16,5 @@ from .setting import *
 from .settings import Settings
 from .translation import *
 from .devicetimer import *
+from .setpointtimer import *
 from .basetimer import *
