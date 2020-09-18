@@ -123,7 +123,7 @@ class BaseTimer(ABC):
             self._mday = int(args[7])
             self._month = int(args[8])
                         
-            self._initargs(args)
+            self._initargs(args[9:])
             
             BaseTimer.__checkTypeAndValues(self._timertype, self._date, self._occurence, self._mday, self._month)
                             

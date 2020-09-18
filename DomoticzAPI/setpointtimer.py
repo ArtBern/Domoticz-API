@@ -52,7 +52,7 @@ class SetPointTimer(BaseTimer):
         super().__init__(device, *args, **kwargs)
     
     def _initargs(self, args):
-        self._tvalue = float(args[6])
+        self._tvalue = float(args[0])
     
     def _comparefields(self, var):
         return self._tvalue == float(var.get("Temperature"))
