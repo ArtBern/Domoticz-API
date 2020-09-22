@@ -125,7 +125,7 @@ class BaseTimer(ABC):
                         
             self._initargs(args[9:])
             
-            BaseTimer.__checkTypeAndValues(self._timertype, self._date, self._occurence, self._mday, self._month)
+            self.__checkTypeAndValues(self._timertype, self._date, self._occurence, self._mday, self._month)
                             
         else:
             idx = kwargs.get("idx")
@@ -136,23 +136,45 @@ class BaseTimer(ABC):
         self._api = self._device.hardware.api
         self._init()
         
-    @staticmethod  
-    def __checkTypeAndValues( timertype, date, occurence, mday, month):
-        if (timertype == TimerTypes.TME_TYPE_FIXED_DATETIME \
-            and date is None):
-            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
-        elif (timertype == TimerTypes.TME_TYPE_MONTHLY \
-            and mday == 0):
-            raise ValueError("Month day should be specified for TME_TYPE_MONTHLY.")
-        elif (timertype == TimerTypes.TME_TYPE_MONTHLY_WD \
-            and occurence == 0):
-            raise ValueError("Occurence should be specified for TME_TYPE_MONTHLY_WD.")
-        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY \
-            and (mday == 0 or month ==0)):
-            raise ValueError("Day and Month should be specified for TME_TYPE_YEARLY.")
-        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY_WD \
-            and (occurence == 0 or month ==0)):
-            raise ValueError("Occurence and Month should be specified for TME_TYPE_YEARLY_WD")
+    def __checkTypeAndValues(self, timertype, date, occurence, mday, month):
+        if (timertype == TimerTypes.TME_TYPE_FIXED_DATETIME):
+            if (date is None):
+                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
+            else:
+                self._occurence = 0
+                self._mday = 0
+                self._month = 0
+        elif (timertype == TimerTypes.TME_TYPE_MONTHLY):
+            if (mday == 0):
+                raise ValueError("Month day should be specified for TME_TYPE_MONTHLY.")
+            else:
+                self._date = None
+                self._occurence = 0
+                self._mday = 0
+        elif (timertype == TimerTypes.TME_TYPE_MONTHLY_WD):
+            if (occurence == 0):
+                raise ValueError("Occurence should be specified for TME_TYPE_MONTHLY_WD.")
+            else:
+                self._date = None
+                self._mday = 0
+                self._month = 0
+        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY):
+            if (mday == 0 or month ==0):
+                raise ValueError("Day and Month should be specified for TME_TYPE_YEARLY.")
+            else:
+                self._date = None
+                self._occurence = 0
+        elif (timertype ==  TimerTypes.TME_TYPE_YEARLY_WD):
+            if (occurence == 0 or month ==0):
+                raise ValueError("Occurence and Month should be specified for TME_TYPE_YEARLY_WD")
+            else:
+                self._mday = 0
+                self._date = None
+        else:
+            self._date = None
+            self._occurence = 0
+            self._mday = 0
+            self._month = 0
     
     @abstractmethod
     def _initargs(self, args):
@@ -201,7 +223,7 @@ class BaseTimer(ABC):
                 t = datetime.strptime(var.get("Time"),"%H:%M")
                 if aftercreate:
                     #print("{} {} {}:{} {} Date:{}".format(str_2_bool(var.get("Active")), int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
-                    if self._timertype == int(var.get("Type")) \
+                    if self._timertype == TimerTypes(int(var.get("Type"))) \
                             and self._active == str_2_bool(var.get("Active")) \
                             and self._hour == t.hour \
                             and self._min == t.minute \
@@ -214,7 +236,7 @@ class BaseTimer(ABC):
                         if self._idx is None or self._idx < int(var.get("idx")):
                             self._idx = int(var.get("idx"))
                             self._active = str_2_bool(var.get("Active"))
-                            self._timertype = int(var.get("Type"))
+                            self._timertype = TimerTypes(int(var.get("Type")))
                             self._hour = t.hour
                             self._min = t.minute
                             self._days = TimerDays(int(var.get("Days")))
@@ -229,7 +251,7 @@ class BaseTimer(ABC):
                     #print("{} {} {}:{} {} Date:{}".format(var.get("idx"), int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
                     if (self._idx is not None and int(var.get("idx")) == self._idx):
                         self._active = str_2_bool(var.get("Active"))
-                        self._timertype = int(var.get("Type"))
+                        self._timertype = TimerTypes(int(var.get("Type")))
                         self._hour = t.hour
                         self._min = t.minute
                         self._days = TimerDays(int(var.get("Days")))
@@ -259,7 +281,7 @@ class BaseTimer(ABC):
                 self._hour,
                 self._min,
                 self._days.value,
-                self._date,
+                self._date if BaseTimer._checkDateFormat(self._date) is not None else "",
                 self._occurence,
                 self._mday,
                 self._month,
@@ -268,6 +290,8 @@ class BaseTimer(ABC):
             self._api.call()
             if self._api.status == self._api.OK:
                 self._init(True)
+            else:
+                print ("Not ok adding timer")
 
     def delete(self):
         if self.exists():
@@ -305,40 +329,40 @@ class BaseTimer(ABC):
             
     def setfixeddatetimer(self, date):
         valueChecked = BaseTimer._checkDateFormat(date)
-        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_FIXED_DATETIME, valueChecked, self._occurence, self._mday, self._month)
+        self.__checkTypeAndValues(TimerTypes.TME_TYPE_FIXED_DATETIME, valueChecked, self._occurence, self._mday, self._month)
         
         self._date = valueChecked
-        self._timertype = self.TME_TYPE_FIXED_DATETIME
+        self._timertype = TimerTypes.TME_TYPE_FIXED_DATETIME
         self._update()
         
     def setmonthlytimer(self, mday):
-        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_MONTHLY, self._date, self._occurence, mday, self._month)
+        self.__checkTypeAndValues(TimerTypes.TME_TYPE_MONTHLY, self._date, self._occurence, mday, self._month)
         
         self._mday = mday
-        self._timertype = self.TME_TYPE_MONTHLY
+        self._timertype = TimerTypes.TME_TYPE_MONTHLY
         self._update()
         
     def setmonthlywdtimer(self, occurence):
-        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_MONTHLY_WD, self._date, occurence, self._mday, self._month)
+        self.__checkTypeAndValues(TimerTypes.TME_TYPE_MONTHLY_WD, self._date, occurence, self._mday, self._month)
         
         self._occurence = occurence
-        self._timertype = self.TME_TYPE_MONTHLY_WD
+        self._timertype = TimerTypes.TME_TYPE_MONTHLY_WD
         self._update()
         
     def setyearlytimer(self, mday, month):
-        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_YEARLY, self._date, self._occurence, mday, month)
+        self.__checkTypeAndValues(TimerTypes.TME_TYPE_YEARLY, self._date, self._occurence, mday, month)
         
         self._mday = mday
         self._month = month
-        self._timertype = self.TME_TYPE_YEARLY
+        self._timertype = TimerTypes.TME_TYPE_YEARLY
         self._update()
         
     def setyearlywdtimer(self, occurence, month):
-        BaseTimer.__checkTypeAndValues(Timer.TME_TYPE_YEARLY_WD, self._date, occurence, self._mday, month)
+        self.__checkTypeAndValues(TimerTypes.TME_TYPE_YEARLY_WD, self._date, occurence, self._mday, month)
         
         self._occurence = occurence
         self._month = month
-        self._timertype = self.TME_TYPE_YEARLY_WD
+        self._timertype = TimerTypes.TME_TYPE_YEARLY_WD
         self._update()
 
     # ..........................................................................
@@ -376,11 +400,9 @@ class BaseTimer(ABC):
 
     @timertype.setter
     def timertype(self, value):
-        if value in self.TME_TYPES:
-            if (value == self.TME_TYPE_FIXED_DATETIME \
-                and self._date is None):
-                raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME. Use setdatetimer(date) method.")
-            self._timertype = value
+        if value in TimerTypes:
+            self.__checkTypeAndValues(TimerTypes(int(value)), self._date, self._occurence, self._mday, self._month)   
+            self._timertype = TimerTypes(int(value))
             self._update()
     
     @property
@@ -413,21 +435,40 @@ class BaseTimer(ABC):
     @date.setter
     def date(self, value):
         valueChecked = BaseTimer._checkDateFormat(value)
-        if (self._timertype == self.TME_TYPE_FIXED_DATETIME \
-            and valueChecked is None):
-            raise ValueError("Date should be specified for TME_TYPE_FIXED_DATETIME.")
-        elif (self._timertype != self.TME_TYPE_FIXED_DATETIME):
-            raise ValueError("Not able to update date for non-TME_TYPE_FIXED_DATETIME timer type. Use setdatetimer(date) method.")
+        self.__checkTypeAndValues(self._timertype, valueChecked, self._occurence, self._mday, self._month)
         self._date = valueChecked
+        self._update()
+
+    @property
+    def occurence(self):
+        """int: Timer occurence."""
+        return self._occurence
+
+    @occurence.setter
+    def occurence(self, value):
+        self.__checkTypeAndValues(self._timertype, self._date, int(value), self._mday, self._month)
+        self._occurence = int(value)
         self._update()
     
     @property
-    def temperature(self):
-        """float: Timer temerature."""
-        return self._min
+    def mday(self):
+        """int: Timer mday."""
+        return self._mday
 
-    @temperature.setter
-    def temperature(self, value):
-        self._tvalue = float(value)
+    @mday.setter
+    def mday(self, value):
+        self.__checkTypeAndValues(self._timertype, self._date, self._occurence, int(value), self._month)
+        self._mday = int(value)
+        self._update()
+    
+    @property
+    def month(self):
+        """int: Timer month."""
+        return self._month
+
+    @month.setter
+    def month(self, value):
+        self.__checkTypeAndValues(self._timertype, self._date, self._occurence, self._mday, int(value))
+        self._month = int(value)
         self._update()
     

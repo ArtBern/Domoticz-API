@@ -36,7 +36,7 @@ def main():
             print("Thermostat successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
-            tmr = dom.SetPointTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, 6)
+            tmr = dom.SetPointTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, 7)
             print (tmr)
             print("Timer exists: {}".format(tmr.exists()))
             print("Adding new timer.")
@@ -53,11 +53,21 @@ def main():
             print("--------------------------------------------------------------------------------")
             print("Update timer")
             print("--------------------------------------------------------------------------------")
-            try:
-                tmr.date = "2020-12-01"
-                raise RuntimeError("Expected ValueError not raised!!!")
-            except ValueError:
-                pass
+            tmr.date = "2020-12-01"
+            if (tmr.date is not None):
+                raise RuntimeError("Should not be possible to set date for this timertype!!!")
+
+            tmr.occurence = 2
+            if (tmr.occurence != 0):
+                raise RuntimeError("Should not be possible to set occurence for this timertype!!!")
+
+            tmr.mday = 3
+            if (tmr.mday != 0):
+                raise RuntimeError("Should not be possible to set mday for this timertype!!!")
+
+            tmr.month = 6
+            if (tmr.month != 0):
+                raise RuntimeError("Should not be possible to set month for this timertype!!!")
             
             try:
                 tmr.timertype = dom.TimerTypes.TME_TYPE_FIXED_DATETIME
@@ -70,7 +80,7 @@ def main():
             print("Negative checks passed.")
             print("Change type to Fixed Date/Time.")            
             print("--------------------------------------------------------------------------------")            
-            tmr.setdatetimer("2020-12-02")
+            tmr.setfixeddatetimer("2020-12-02")
             print(tmr)
             print("--------------------------------------------------------------------------------")
             print("Change time.")
