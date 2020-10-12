@@ -43,7 +43,7 @@ def main():
             tmr.add()
             print("Timer exists: {}".format(tmr.exists()))
             if tmr.exists():
-                print ("Device timer successfully created")
+                print ("Thermostat timer successfully created")
                 print (tmr)
             else:
                 print ("Failed to add timer!!!")
@@ -95,6 +95,21 @@ def main():
             tmr.active = False
             tmr.temperature = 20.8
             print (tmr)
+
+            tmr1 = dom.SetPointTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, 20)
+            print("Adding new timer 2.")
+            tmr1.add()
+
+            tmr2 = dom.SetPointTimer(dev3, Active=False, Date='2020-12-03', Days=dom.TimerDays.Sunday, MDay=0, Month=0, Occurence=0, Temperature=45, Time='14:30', Type=dom.TimerTypes.TME_TYPE_ON_TIME )
+            print("Adding new timer 3.")
+            tmr2.add()
+
+            print("--------------------------------------------------------------------------------")
+            print("Bulk load timers.")
+            print("--------------------------------------------------------------------------------")           
+            timers = dom.SetPointTimer.loadbythermostat(dev3)
+            for tmr1 in timers:
+                print (tmr1)
             
             tmr.delete()
             if tmr.exists():

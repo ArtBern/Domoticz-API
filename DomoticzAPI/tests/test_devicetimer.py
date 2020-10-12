@@ -36,7 +36,7 @@ def main():
             print("Thermostat successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
-            tmr = dom.DeviceTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 6)
+            tmr = dom.DeviceTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, False, 0, 100)
             print (tmr)
             print("Timer exists: {}".format(tmr.exists()))
             print("Adding new timer.")
@@ -53,14 +53,24 @@ def main():
             print("--------------------------------------------------------------------------------")
             print("Update timer")
             print("--------------------------------------------------------------------------------")
-            try:
-                tmr.date = "2020-12-01"
-                raise RuntimeError("Expected ValueError not raised!!!")
-            except ValueError:
-                pass
+            tmr.date = "2020-12-01"
+            if (tmr.date is not None):
+                raise RuntimeError("Should not be possible to set date for this timertype!!!")
+
+            tmr.occurence = 2
+            if (tmr.occurence != 0):
+                raise RuntimeError("Should not be possible to set occurence for this timertype!!!")
+
+            tmr.mday = 3
+            if (tmr.mday != 0):
+                raise RuntimeError("Should not be possible to set mday for this timertype!!!")
+
+            tmr.month = 6
+            if (tmr.month != 0):
+                raise RuntimeError("Should not be possible to set month for this timertype!!!")
             
             try:
-                tmr.timertype = dom.DeviceTimer.TME_TYPE_FIXED_DATETIME
+                tmr.timertype = dom.TimerTypes.TME_TYPE_FIXED_DATETIME
                 raise RuntimeError("Expected ValueError not raised!!!")
             except ValueError:
                 pass
@@ -70,7 +80,7 @@ def main():
             print("Negative checks passed.")
             print("Change type to Fixed Date/Time.")            
             print("--------------------------------------------------------------------------------")            
-            tmr.setdatetimer("2020-12-02")
+            tmr.setfixeddatetimer("2020-12-02")
             print(tmr)
             print("--------------------------------------------------------------------------------")
             print("Change time.")
@@ -83,8 +93,25 @@ def main():
             print("Deactivate timer and set value.")
             print("--------------------------------------------------------------------------------")           
             tmr.active = False
-            tmr.temperature = 20.8
+            tmr.randomness = True
+            tmr.command = 1
+            tmr.level = 80
             print (tmr)
+
+            tmr1 = dom.DeviceTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, True, 1, 90)
+            print("Adding new timer 2.")
+            tmr1.add()
+
+            tmr2 = dom.DeviceTimer(dev3, Active=False, Date='2020-12-03', Days=dom.TimerDays.Sunday, MDay=0, Month=0, Occurence=0, Randomness=False, Command=0, Level=75, Time='14:30', Type=dom.TimerTypes.TME_TYPE_ON_TIME )
+            print("Adding new timer 3.")
+            tmr2.add()
+
+            print("--------------------------------------------------------------------------------")
+            print("Bulk load timers.")
+            print("--------------------------------------------------------------------------------")           
+            timers = dom.DeviceTimer.loadbydevice(dev3)
+            for tmr1 in timers:
+                print (tmr1)
             
             tmr.delete()
             if tmr.exists():

@@ -20,7 +20,7 @@ class SetPointTimer(BaseTimer):
     _args_length = 1
     
     def __init__(self, device, *args, **kwargs):
-        """ DeviceTimer class
+        """ SetPointTimer class
             Args:
                 device (Device): Domoticz device object where to maintain the timer
                     idx (:obj:`int`): ID of an existing timer
@@ -58,21 +58,36 @@ class SetPointTimer(BaseTimer):
         return self._tvalue == float(var.get("Temperature"))
         
     def _initfields(self, var):
-        self._tvalue = float(var.get("Temperature"))
+        self._tvalue = float(var.get("Temperature", 0))
     
     def _addquerystring(self):
         return "&tvalue={}".format(self._tvalue)
         
     def _addstr(self):
         return ", Temperature: {}".format(self._tvalue)
-        
+    
+    @staticmethod
+    def loadbythermostat(device):
+        result = []
+        if isinstance(device, Device) and device.exists() and device.type == "Thermostat":
+            api = device.hardware.api
+            querystring = "type={}&idx={}".format(SetPointTimer._param_timers, device._idx)
+            api.querystring = querystring
+            api.call()
+            if api.is_OK() and api.has_payload():
+                for var in api.payload:
+                    var["is_from_factory"] = True
+                    timr = SetPointTimer(device, **var)
+                    result.append(timr)
+        return result
+            
     # ..........................................................................
     # Properties
     # ..........................................................................
     
     @property
     def temperature(self):
-        """float: Timer temerature."""
+        """float: Timer temperature."""
         return self._tvalue
 
     @temperature.setter

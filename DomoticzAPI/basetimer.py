@@ -104,7 +104,7 @@ class BaseTimer(ABC):
             self._device = device
         else:
             self._device = None
-        print(args)    
+
         # Existing timer: def __init__(self, device, idx)
         if len(args) == 1:
             # For existing timer
@@ -129,9 +129,16 @@ class BaseTimer(ABC):
                             
         else:
             idx = kwargs.get("idx")
+            #print(kwargs)
             self._idx = int(idx) if idx is not None else None
-            if self._idx is None:
-                self._timertype = kwargs.get("timertype")
+            if self._idx is not None:
+ 
+                if kwargs.get("is_from_factory"): 
+                    self._fillfrompayload(kwargs)
+                    return
+             
+            else:
+                self._fillfromkwargs(kwargs)
 
         self._api = self._device.hardware.api
         self._init()
@@ -197,7 +204,7 @@ class BaseTimer(ABC):
         pass
     
     def __str__(self):
-        return "{}({}, ID:{}, Active: {}, TimerType:{}, Hour:{}, Min:{}, Days:{}, Date:{}, Occurence:{}, MDay:{}, Month:{})".format(self.__class__.__name__,
+        return "{}({}, ID:{}, Active: {}, TimerType:{}, Hour:{}, Min:{}, Days:{}, Date:{}, Occurence:{}, MDay:{}, Month:{} {})".format(self.__class__.__name__,
                                            str(self._device),
                                            self._idx,
                                            self._active,
@@ -213,6 +220,37 @@ class BaseTimer(ABC):
     # ..........................................................................
     # Private methods
     # ..........................................................................
+    def _fillfrompayload(self, var):
+        t = datetime.strptime(var.get("Time"),"%H:%M")
+        self._idx = int(var.get("idx"))
+        self._active = str_2_bool(var.get("Active"))
+        self._timertype = TimerTypes(int(var.get("Type")))
+        self._hour = t.hour
+        self._min = t.minute
+        self._days = TimerDays(int(var.get("Days")))
+        self._date = BaseTimer._checkDateFormat(var.get("Date"))
+        self._occurence = int(var.get("Occurence")) 
+        self._mday = int(var.get("MDay")) 
+        self._month = int(var.get("Month"))
+        
+        self._initfields(var)
+
+    def _fillfromkwargs(self, var):
+        t = datetime.strptime(var.get("Time", "00:00"),"%H:%M")
+        self._active = str_2_bool(var.get("Active", False))
+        self._timertype = TimerTypes(int(var.get("Type", TimerTypes.TME_TYPE_ON_TIME)))
+        self._hour = t.hour
+        self._min = t.minute
+        self._days = TimerDays(int(var.get("Days", 0)))
+        self._date = BaseTimer._checkDateFormat(var.get("Date", None))
+        self._occurence = int(var.get("Occurence", 0)) 
+        self._mday = int(var.get("MDay", 1)) 
+        self._month = int(var.get("Month", 1))
+        
+        self._initfields(var)
+   
+
+    
     def _init(self, aftercreate=False):
     
         querystring = "type={}&idx={}".format(self._param_timers, self._device._idx)
@@ -234,32 +272,12 @@ class BaseTimer(ABC):
                             and self._month == int(var.get("Month")) \
                             and self._comparefields(var):
                         if self._idx is None or self._idx < int(var.get("idx")):
-                            self._idx = int(var.get("idx"))
-                            self._active = str_2_bool(var.get("Active"))
-                            self._timertype = TimerTypes(int(var.get("Type")))
-                            self._hour = t.hour
-                            self._min = t.minute
-                            self._days = TimerDays(int(var.get("Days")))
-                            self._date = BaseTimer._checkDateFormat(var.get("Date"))
-                            self._occurence = int(var.get("Occurence")) 
-                            self._mday = int(var.get("MDay")) 
-                            self._month = int(var.get("Month"))
-                            
-                            self._initfields(var)
+                            self._fillfrompayload(var)
                     
                 else:
                     #print("{} {} {}:{} {} Date:{}".format(var.get("idx"), int(var.get("Type")), t.hour, t.minute, int(var.get("Days")), var.get("Date")))
                     if (self._idx is not None and int(var.get("idx")) == self._idx):
-                        self._active = str_2_bool(var.get("Active"))
-                        self._timertype = TimerTypes(int(var.get("Type")))
-                        self._hour = t.hour
-                        self._min = t.minute
-                        self._days = TimerDays(int(var.get("Days")))
-                        self._date = BaseTimer._checkDateFormat(var.get("Date"))
-                        self._occurence = int(var.get("Occurence")) 
-                        self._mday = int(var.get("MDay")) 
-                        self._month = int(var.get("Month"))
-                        self._initfields(var)
+                        self._fillfrompayload(var)
                         break
     
     
@@ -286,7 +304,7 @@ class BaseTimer(ABC):
                 self._mday,
                 self._month,
                 self._addquerystring())
-            print(self._api.querystring)
+            #print(self._api.querystring)
             self._api.call()
             if self._api.status == self._api.OK:
                 self._init(True)

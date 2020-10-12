@@ -14,9 +14,9 @@ class DeviceTimer(BaseTimer):
     _param_add_device_timer = "addtimer"
     _param_update_device_timer = "updatetimer"
     _param_delete_device_timer = "deletetimer"
-    _param_clear_device_timers = "clearstimers"
+    _param_clear_device_timers = "cleartimers"
     _param_timers = "timers"
-
+    
     _args_length = 3
     
     def __init__(self, device, *args, **kwargs):
@@ -52,42 +52,72 @@ class DeviceTimer(BaseTimer):
         super().__init__(device, *args, **kwargs)
     
     def _initargs(self, args):
-        self._command = int(args[6])
-        self._level = int(args[7])
-        self._color = args[8]
-        self._randomness = bool(args[9])
-        self._occurence = int(args[10])
+        self._randomness = str_2_bool(args[0])
+        self._command = int_2_bool(args[1])
+        self._level = int(args[2])
     
     def _comparefields(self, var):
-        return self._command == int(var.get("Command")) \
-            and self._level == int(var.get("Level")) \
-            and self._color == var.get("Color") \
-            and self._randomness == str_2_bool(var.get("Randomness"))
-            
-            
+        return self._randomness == str_2_bool(var.get("Randomness")) \
+                and self._command == int_2_bool(var.get("Cmd")) \
+                and self._level == int(var.get("Level"))
+        
     def _initfields(self, var):
-        self._command = int(var.get("Command")) 
-        self._level = int(var.get("Level")) 
-        self._color = var.get("Color") 
-        self._randomness = str_2_bool(var.get("Randomness")) 
-           
+        self._randomness = str_2_bool(var.get("Randomness", "false")) 
+        self._command = int_2_bool(var.get("Cmd", 0))
+        self._level = int(var.get("Level", 100))
+    
     def _addquerystring(self):
-        return "&command={}&level={}&color={}&randomness={}&".format(self._tvalue)
+        return "&randomness={}&command={}&level".format(self._randomness, self._command, self._level)
         
     def _addstr(self):
-        return ", Temperature: {}".format(self._tvalue)
-        
+        return ", Randomness: {}, Command: {}, Level: {}".format(self._randomness, self._command, self._level)
+    
+    @staticmethod
+    def loadbydevice(device):
+        result = []
+        if isinstance(device, Device) and device.exists() and device.type != "Thermostat":
+            api = device.hardware.api
+            querystring = "type={}&idx={}".format(SetPointTimer._param_timers, device._idx)
+            api.querystring = querystring
+            api.call()
+            if api.is_OK() and api.has_payload():
+                for var in api.payload:
+                    var["is_from_factory"] = True
+                    timr = DeviceTimer(device, **var)
+                    result.append(timr)
+        return result
+            
     # ..........................................................................
     # Properties
     # ..........................................................................
     
     @property
-    def temperature(self):
-        """float: Timer temerature."""
-        return self._tvalue
+    def randomness(self):
+        """bool: Timer randomness."""
+        return self._randomness
 
-    @temperature.setter
-    def temperature(self, value):
-        self._tvalue = float(value)
+    @randomness.setter
+    def randomness(self, value):
+        self._randomness = str_2_bool(value)
+        self._update()
+
+    @property
+    def command(self):
+        return self._command
+
+    @command.setter
+    def command(self, value):
+        self._command = int_2_bool(value)
         self._update()
     
+    @property
+    def level(self):
+        return self._level
+
+    @level.setter
+    def level(self, value):
+        self._level = int(value)
+        self._update()
+
+
+
