@@ -16,7 +16,7 @@ def main():
     print("********************************************************************************")
     print("Create new hardware")
     print("********************************************************************************")
-    hw3 = dom.Hardware(server, type=15, name="Test Hardware") 
+    hw3 = dom.Hardware(server, type=15, name="Test Hardware")
     hw3.add()
     print("{}: {} - {}".format(hw3, server.api.status, server.api.title))
 
@@ -25,15 +25,14 @@ def main():
         print("********************************************************************************")
         print("Add device to new hardware")
         print("********************************************************************************")
-        dev3 = dom.Device(server, hw3, "Test Thermostat",
-                          type=242, subtype=1)  # Thermostat
+        dev3 = dom.Device(server, hw3, "Test Device", type=244, subtype=73)  # Switch)  
         print("dev3.hardware: {}".format(dev3.hardware))
         print("{}: {} - {}".format(dev3, server.api.status, server.api.title))
 
         dev3.add()
         print("{}: {} - {}".format(dev3, server.api.status, server.api.title))
         if dev3.exists():
-            print("Thermostat successfully created")
+            print("Device successfully created")
             print("Name: {}".format(dev3.name))
             print("Status: {}".format(dev3.data))
             tmr = dom.DeviceTimer(dev3, True, dom.TimerTypes.TME_TYPE_ON_TIME, 1, 0, dom.TimerDays.Monday | dom.TimerDays.Thuesday, None, 1, 2, 3, False, 0, 100)

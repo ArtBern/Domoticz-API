@@ -3,6 +3,7 @@
 from .api import API
 from .server import Server
 from .device import Device
+from .scene import Scene
 from datetime import datetime
 from enum import IntFlag, IntEnum
 from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
@@ -100,7 +101,7 @@ class BaseTimer(ABC):
         self._mday = 0
         self._month = 0
         
-        if isinstance(device, Device) and device.exists():
+        if (isinstance(device, Device) or isinstance(device, Scene)) and device.exists():
             self._device = device
         else:
             self._device = None
@@ -140,7 +141,7 @@ class BaseTimer(ABC):
             else:
                 self._fillfromkwargs(kwargs)
 
-        self._api = self._device.hardware.api
+        self._api = self._device._api
         self._init()
         
     def __checkTypeAndValues(self, timertype, date, occurence, mday, month):

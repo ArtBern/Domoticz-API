@@ -1,24 +1,22 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
-from .api import API
-from .server import Server
-from .device import Device
+from .scene import Scene
 from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
 from abc import ABC
 from .basetimer import BaseTimer, TimerDays
 
-class DeviceTimer(BaseTimer):
+class SceneTimer(BaseTimer):
 
-    _param_add_device_timer = "addtimer"
-    _param_update_device_timer = "updatetimer"
-    _param_delete_device_timer = "deletetimer"
-    _param_clear_device_timers = "cleartimers"
-    _param_timers = "timers"
+    _param_add_device_timer = "addscenetimer"
+    _param_update_device_timer = "updatescenetimer"
+    _param_delete_device_timer = "deletescenetimer"
+    _param_clear_device_timers = "clearscenetimers"
+    _param_timers = "scenetimers"
     
     _args_length = 3
     
     def __init__(self, device, *args, **kwargs):
-        """ DeviceTimer class
+        """ SceneTimer class
             Args:
                 device (Device): Domoticz device object where to maintain the timer
                     idx (:obj:`int`): ID of an existing timer
@@ -71,17 +69,17 @@ class DeviceTimer(BaseTimer):
         return ", Randomness: {}, Command: {}, Level: {}".format(self._randomness, self._command, self._level)
     
     @staticmethod
-    def loadbydevice(device):
+    def loadbyscene(scene):
         result = []
-        if isinstance(device, Device) and device.exists() and device.type != "Thermostat":
-            api = device.hardware.api
-            querystring = "type={}&idx={}".format(DeviceTimer._param_timers, device._idx)
+        if isinstance(scene, Scene) and scene.exists():
+            api = scene._api
+            querystring = "type={}&idx={}".format(SceneTimer._param_timers, scene._idx)
             api.querystring = querystring
             api.call()
             if api.is_OK() and api.has_payload():
                 for var in api.payload:
                     var["is_from_factory"] = True
-                    timr = DeviceTimer(device, **var)
+                    timr = SceneTimer(scene, **var)
                     result.append(timr)
         return result
             

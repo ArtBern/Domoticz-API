@@ -1,10 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 from .api import API
-from .server import Server
 from .device import Device
-from datetime import datetime
-from enum import IntFlag
 from .utilities import (bool_2_int, int_2_bool, bool_2_str, str_2_bool)
 from abc import ABC
 from .basetimer import BaseTimer, TimerDays
