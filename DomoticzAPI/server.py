@@ -164,6 +164,9 @@ class Server:
     def _str2dt(value, format):
         try:
             return datetime.strptime(value, format)
+        except TypeError:
+            import time
+            return datetime.datetime(*(time.strptime(value, format)[0:6]))
         except:
             return None
 
