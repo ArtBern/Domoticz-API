@@ -9,7 +9,7 @@ class Setting:
 
     _type_settings = "settings"
 
-    _url = "storesettings.webem"
+    _url = "storesettings"
 
     def __init__(self, server):
         """Settings class, to get Domoticz settings
