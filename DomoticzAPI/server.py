@@ -48,6 +48,7 @@ class Server:
     _param_shutdown = "system_shutdown"
     _param_sun = "getSunRiseSet"
     _param_version = "getversion"
+    _param_timerplans = "gettimerplans"
 
     _param_downloadupdate = "downloadupdate"
     _param_downloadready = "downloadready"
@@ -236,6 +237,15 @@ class Server:
             m = self._api.data.get("minutes") * 60
             s = self._api.data.get("seconds")
             self._uptime = d + h + m + s
+    
+    def _getTimerPlans(self):
+        #/json.htm?type=command&param=gettimerplans
+        if self._exists:
+            self._api.querystring = "type=command&param={}".format(
+                self._param_timerplans)
+            self._api.call()
+            d = self._api.data.get("result")
+            self._timerplans = d
 
     # ..........................................................................
     # Public Methods
@@ -583,3 +593,8 @@ class Server:
     def version(self):
         """Domoticz version"""
         return self._version
+    
+    @property
+    def timerplans(self):
+        self._getTimerPlans()
+        return self._timerplans
