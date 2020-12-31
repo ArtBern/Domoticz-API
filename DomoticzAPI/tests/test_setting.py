@@ -9,6 +9,7 @@ def main():
     print("********************************************************************************")
     server = dom.Server()
     print(server.setting)
+ 
     key = "Title"
     value = server.setting.get_value(key)
     print("Current {}: {}".format(key, value))
@@ -16,7 +17,15 @@ def main():
     print("Test {}: {}".format(key, server.setting.get_value(key)))
     server.setting.set_value(key, value)
     print("Restored {}: {}".format(key, server.setting.get_value(key)))
-
+    
+    key = dom.Settings.KEY_WEBTHEME
+    value = server.setting.get_value(key)
+    print("Current theme {}: {}".format(key, value))
+    server.setting.set_value(key, "elemental")
+    print("Test theme {}: {}".format(key, server.setting.get_value(key)))
+    server.setting.set_value(key, value)
+    print("Restored theme {}: {}".format(key, server.setting.get_value(key)))
+    
     # Check ON/OF (checkbox) switch in the settings
     key = dom.Settings.KEY_ALLOWWIDGETORDERING
     value = server.setting.get_value(key)
@@ -35,7 +44,15 @@ def main():
     print("{}: {}".format(key, server.setting.get_value(key)))
     key = "WeightUnit"
     print("{}: {}".format(key, server.setting.get_value(key)))
-
+    
+    key = dom.Settings.KEY_ACTIVETIMERPLAN
+    value = server.setting.get_value(key);
+    print("ActiveTimerPlan ................ : {}".format(value))
+    server.setting.set_value(key, 1)
+    print("ActiveTimerPlan ................ : {}".format(server.setting.get_value(key)))
+    server.setting.set_value(key, 2)
+    print("ActiveTimerPlan ................ : {}".format(server.setting.get_value(key)))
+    server.setting.set_value(key, value)
 
 if __name__ == "__main__":
     main()

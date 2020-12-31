@@ -3,6 +3,7 @@
 from .settings import Settings
 import urllib.request as request
 import urllib.parse as parse
+import base64
 
 
 class Setting:
@@ -47,6 +48,9 @@ class Setting:
         # Not required yet. Perhaps in the near future to be sure that ALL setting are available for use.
         if key in Settings.KEYS:
             self._getSettings()
+            
+            
+            
             return self._settings.get(key)
         else:
             return None
@@ -65,7 +69,7 @@ class Setting:
             )
             self._getSettings()
             d = self._settings
-            # First we have to transform all switches from 0/1 to <deleted>/on :(
+            # First we have to transform all switches from None/0/1 to <deleted>/on :(
             for k, v in list(d.items()):
                 if k in Settings.KEY_SWITCHES:
                     # DisableDzVentsSystem works the opposite way!!!
@@ -78,7 +82,7 @@ class Setting:
                         else:
                             d[key] = "on"
                     else:
-                        if v == Settings.SETTING_OFF:
+                        if v != Settings.SETTING_ON:
                             try:
                                 del d[k]
                             except:
@@ -93,6 +97,10 @@ class Setting:
                                     d.update({'enableautobackup': 'on'})
                             else:
                                 d[k] = "on"
+                
+                if k in Settings.KEY_ENCODED:
+                    d[k] = base64.b64decode(v)
+                                
             # Finally: set the value
             if key in Settings.KEY_SWITCHES:
                 if value in Settings.SETTING_VALUES:
@@ -106,7 +114,7 @@ class Setting:
                         else:
                             d[key] = "on"
                     else:
-                        if value == Settings.SETTING_OFF:
+                        if value != Settings.SETTING_ON:
                             try:
                                 del d[key]
                             except:
@@ -115,6 +123,11 @@ class Setting:
                             d[key] = "on"
             else:
                 d[key] = value
+            
+            # https://github.com/domoticz/domoticz/blob/db346f96e289dc20c0d33c3cffefbb6d4065cc76/main/WebServer.cpp#L8413                    
+            d[Settings.KEY_THEMES] = d[Settings.KEY_WEBTHEME]
+            
+            #print("Data" + str(d))
             data = parse.urlencode(d).encode("utf-8")
             req = request.Request(url, data=data)
             try:

@@ -71,16 +71,6 @@ def main():
         print("--------------------------------------------------------------------------------")
         timerplans = server.timerplans;
         print(str(timerplans));
-        origplan = server.setting.get_value("ActiveTimerPlan");
-        print("ActiveTimerPlan ................ : {}".format(
-            origplan))
-        server.setting.set_value("ActiveTimerPlan", 1)
-        print("ActiveTimerPlan ................ : {}".format(
-            server.setting.get_value("ActiveTimerPlan")))
-        server.setting.set_value("ActiveTimerPlan", 2)
-        print("ActiveTimerPlan ................ : {}".format(
-            server.setting.get_value("ActiveTimerPlan")))
-        server.setting.set_value("ActiveTimerPlan", origplan)
         
     else:
         print("Server not found!!!")
