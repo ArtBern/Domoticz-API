@@ -131,6 +131,7 @@ class Settings:
     KEY_TEMPHOME = "TempHome"
     KEY_TEMPUNIT = "TempUnit"
     KEY_THEMES = "Themes"
+    KEY_WEBTHEME = "WebTheme"
     KEY_TITLE = "Title"
     KEY_USEEMAILINNOTIFICATIONS = "UseEmailInNotifications"
     KEY_UVCPARAMS = "UVCParams"
@@ -274,7 +275,7 @@ class Settings:
         KEY_TEMPCOMFORT,
         KEY_TEMPHOME,
         KEY_TEMPUNIT,
-        KEY_THEMES,
+        KEY_WEBTHEME,
         KEY_TITLE,
         KEY_USEEMAILINNOTIFICATIONS,
         KEY_UVCPARAMS,
@@ -340,6 +341,24 @@ class Settings:
         KEY_ENABLEEVENTSCRIPTSYSTEM,
         KEY_LOGEVENTSCRIPTTRIGGER,
         KEY_DISABLEDZVENTSSYSTEM,
+    ]
+    
+    # https://github.com/domoticz/domoticz/search?q=SetupConfigBase64
+    KEY_ENCODED = [
+        KEY_HTTPFIELD1,
+        KEY_HTTPFIELD2,
+        KEY_HTTPFIELD3,
+        KEY_HTTPFIELD4,
+        KEY_HTTPPOSTCONTENTTYPE,
+        KEY_HTTPPOSTDATA,
+        KEY_HTTPPOSTHEADERS,
+        KEY_HTTPTO,
+        KEY_HTTPURL,
+        KEY_CLICKATELLAPI,
+        KEY_CLICKATELLFROM,
+        KEY_CLICKATELLTO,
+        KEY_EMAILPASSWORD,
+        KEY_EMAILUSERNAME
     ]
 
     AUTHENTICATION_METHOD_LOGIN_PAGE = 0
