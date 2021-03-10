@@ -33,8 +33,6 @@ class Setting:
             self._server._api.call()
             if self._server._api.status == self._server._api.OK:
                 self._settings = self._server._api.data
-                if Settings.KEY_DISABLEDZVENTSSYSTEM not in self._settings:
-                    self._settings[Settings.KEY_DISABLEDZVENTSSYSTEM] = Settings.SETTING_ON
 
     # ..........................................................................
     # Public methods
@@ -50,9 +48,7 @@ class Setting:
         # Not required yet. Perhaps in the near future to be sure that ALL setting are available for use.
         if key in Settings.KEYS:
             self._getSettings()
-            
-            
-            
+  
             return self._settings.get(key)
         else:
             return None
@@ -76,7 +72,7 @@ class Setting:
                 if k in Settings.KEY_SWITCHES:
                     # DisableDzVentsSystem works the opposite way!!!
                     if k == Settings.KEY_DISABLEDZVENTSSYSTEM:
-                        if value == Settings.SETTING_ON:
+                        if v == Settings.SETTING_ON:
                             try:
                                 del d[k]
                             except:
@@ -107,7 +103,7 @@ class Setting:
             if key in Settings.KEY_SWITCHES:
                 if value in Settings.SETTING_VALUES:
                     # DisableDzVentsSystem works the opposite way!!!
-                    if k == Settings.KEY_DISABLEDZVENTSSYSTEM:
+                    if key == Settings.KEY_DISABLEDZVENTSSYSTEM:
                         if value == Settings.SETTING_ON:
                             try:
                                 del d[key]
@@ -129,7 +125,7 @@ class Setting:
             # https://github.com/domoticz/domoticz/blob/db346f96e289dc20c0d33c3cffefbb6d4065cc76/main/WebServer.cpp#L8413                    
             d[Settings.KEY_THEMES] = d[Settings.KEY_WEBTHEME]
             
-            #print("Data" + str(d))
+            print("Data" + str(d))
             data = parse.urlencode(d).encode("utf-8")
             req = request.Request(url, data=data)
             try:

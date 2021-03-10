@@ -9,7 +9,11 @@ def main():
     print("********************************************************************************")
     server = dom.Server()
     print(server.setting)
- 
+
+    key = dom.Settings.KEY_DISABLEDZVENTSSYSTEM
+    value = server.setting.get_value(key)
+    print("Current {}: {}".format(key, value))
+
     key = "Title"
     value = server.setting.get_value(key)
     print("Current {}: {}".format(key, value))
@@ -17,6 +21,19 @@ def main():
     print("Test {}: {}".format(key, server.setting.get_value(key)))
     server.setting.set_value(key, value)
     print("Restored {}: {}".format(key, server.setting.get_value(key)))
+
+    key = dom.Settings.KEY_DISABLEDZVENTSSYSTEM
+    value = server.setting.get_value(key)
+    print("Current {}: {}".format(key, value))
+    if value == dom.Settings.SETTING_ON:
+        server.setting.set_value(key, dom.Settings.SETTING_OFF)
+    else:
+        server.setting.set_value(key, dom.Settings.SETTING_ON)
+    print("Test {}: {}".format(key, server.setting.get_value(key)))
+    server.setting.set_value(key, value)
+    print("Restored {}: {}".format(key, server.setting.get_value(key)))
+	
+    return
     
     key = dom.Settings.KEY_WEBTHEME
     value = server.setting.get_value(key)
