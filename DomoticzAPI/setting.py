@@ -125,7 +125,7 @@ class Setting:
             # https://github.com/domoticz/domoticz/blob/db346f96e289dc20c0d33c3cffefbb6d4065cc76/main/WebServer.cpp#L8413                    
             d[Settings.KEY_THEMES] = d[Settings.KEY_WEBTHEME]
             
-            print("Data" + str(d))
+            #print("Data" + str(d))
             data = parse.urlencode(d).encode("utf-8")
             req = request.Request(url, data=data)
             try:
