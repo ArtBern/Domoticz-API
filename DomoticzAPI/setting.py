@@ -76,11 +76,11 @@ class Setting:
                     if k == Settings.KEY_DISABLEDZVENTSSYSTEM:
                         if value == Settings.SETTING_ON:
                             try:
-                                del d[key]
+                                del d[k]
                             except:
                                 pass
                         else:
-                            d[key] = "on"
+                            d[k] = "on"
                     else:
                         if v != Settings.SETTING_ON:
                             try:
