@@ -33,6 +33,8 @@ class Setting:
             self._server._api.call()
             if self._server._api.status == self._server._api.OK:
                 self._settings = self._server._api.data
+                if !(Settings.KEY_DISABLEDZVENTSSYSTEM in self._settings):
+                    self._settings[Settings.KEY_DISABLEDZVENTSSYSTEM] = Settings.SETTING_OFF
 
     # ..........................................................................
     # Public methods
