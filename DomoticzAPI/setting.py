@@ -125,6 +125,18 @@ class Setting:
             # https://github.com/domoticz/domoticz/blob/db346f96e289dc20c0d33c3cffefbb6d4065cc76/main/WebServer.cpp#L8413                    
             d[Settings.KEY_THEMES] = d[Settings.KEY_WEBTHEME]
             
+            # https://github.com/domoticz/domoticz/blob/f79cf66245cc27de722cf81cbe49481e0ee14490/www/app/SetupController.js#L650
+            # https://github.com/domoticz/domoticz/blob/db346f96e289dc20c0d33c3cffefbb6d4065cc76/main/WebServer.cpp#L8466
+            if Settings.KEY_MYDOMOTICZSUBSYSTEMS in d:
+                if d[Settings.KEY_MYDOMOTICZSUBSYSTEMS] & 1 > 0:
+                    d[Settings.KEY_SUBSYSTEMHTTP] = 1
+                
+                if d[Settings.KEY_MYDOMOTICZSUBSYSTEMS] & 2 > 0:
+                    d[Settings.KEY_SUBSYSTEMSHARED] = 1
+                
+                if d[Settings.KEY_MYDOMOTICZSUBSYSTEMS] & 4 > 0:
+                    d[Settings.KEY_SUBSYSTEMAPPS] = 1
+                    
             #print("Data" + str(d))
             data = parse.urlencode(d).encode("utf-8")
             req = request.Request(url, data=data)
